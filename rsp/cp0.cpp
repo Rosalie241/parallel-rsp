@@ -8,6 +8,7 @@ namespace RSP
 extern RSP_INFO rsp;
 extern short MFC0_count[32];
 extern int SP_STATUS_TIMEOUT;
+extern bool SP_STATUS_TIMED_OUT;
 } // namespace RSP
 #endif
 
@@ -35,6 +36,7 @@ extern "C"
 			if (RSP::MFC0_count[rt] >= RSP::SP_STATUS_TIMEOUT)
 			{
 				*RSP::rsp.SP_STATUS_REG |= SP_STATUS_HALT;
+				RSP::SP_STATUS_TIMED_OUT = true;
 				return MODE_CHECK_FLAGS;
 			}
 		}

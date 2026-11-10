@@ -21,6 +21,7 @@ RSP::CPU cpu;
 RSP::JIT::CPU cpu;
 #endif
 short MFC0_count[32];
+bool SP_STATUS_TIMED_OUT;
 int SP_STATUS_TIMEOUT;
 } // namespace RSP
 
@@ -69,6 +70,7 @@ extern "C"
 
 		for (auto &count : RSP::MFC0_count)
 			count = 0;
+		RSP::SP_STATUS_TIMED_OUT = false;
 
 		while (!(*RSP::rsp.SP_STATUS_REG & SP_STATUS_HALT))
 		{
@@ -84,7 +86,9 @@ extern "C"
 			return cycles;
 		else if (*RSP::cpu.get_state().cp0.irq & 1)
 			RSP::rsp.CheckInterrupts();
-		else if (*RSP::rsp.SP_STATUS_REG & SP_STATUS_HALT)
+		// HALT set by the SP_STATUS polling timeout in RSP_MFC0 only pauses
+		// the task: the microcode is waiting for the CPU and has to resume.
+		else if ((*RSP::rsp.SP_STATUS_REG & SP_STATUS_HALT) && !RSP::SP_STATUS_TIMED_OUT)
 			return cycles;
 		else if (*RSP::rsp.SP_SEMAPHORE_REG != 0) // Semaphore lock fixes.
 		{
